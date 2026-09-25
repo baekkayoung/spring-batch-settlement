@@ -2,6 +2,7 @@ package com.batch.settlement.job;
 
 import com.batch.settlement.domain.Orders;
 import com.batch.settlement.domain.Settlement;
+import com.batch.settlement.listener.JobLoggerListener;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,12 +34,16 @@ public class SettlementJobConfig {
     private final PlatformTransactionManager transactionManager;
     private final EntityManagerFactory entityManagerFactory;
 
+    private final JobLoggerListener jobLoggerListener;
+
     @Bean
     public Job settlementJob(){
         return new JobBuilder("settlementJob", jobRepository)
+                .listener(jobLoggerListener)
                 .start(settlementStep())
                 .build();
     }
+
 
     @Bean
     public Step settlementStep() {
@@ -54,7 +59,7 @@ public class SettlementJobConfig {
     //ItemReader
     @Bean
     @StepScope
-    public JpaPagingItemReader<Orders> ordersReader(@Value("#{jobParameter['targetDate']}")String targetDate) {
+    public JpaPagingItemReader<Orders> ordersReader(@Value("#{jobParameters['targetDate']}")String targetDate) {
         log.info("[Reader] 정산 집계 대상 날짜 : {}", targetDate);
 
         return new JpaPagingItemReaderBuilder<Orders>()
